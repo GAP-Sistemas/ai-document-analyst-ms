@@ -1,0 +1,39 @@
+service: ai-document-analyst-python-ms
+
+frameworkVersion: '3'
+
+plugins:
+  - serverless-python-requirements
+
+useDotenv: true
+
+custom:
+  pythonRequirements:
+    dockerizePip: true
+    dockerFile: Dockerfile
+
+provider:
+  name: aws
+  region: sa-east-1
+  stage: ${opt:stage, 'dev'}
+  runtime: python3.8
+  environment:
+    BUCKET_NAME: upload-gestao-contratados
+  iamRoleStatements:
+    - ${file(iam/S3bucketIAM.yml):S3bucketIAM}
+
+layers:
+  tesseractAl2:
+    # and path to contents
+    path: ready-to-use/amazonlinux-2
+    compatibleRuntimes:
+      - python3.8
+
+functions:
+  ocr:
+    handler: handlers/ocr-handler.rotate_image
+    runtime: python3.8
+    timeout: 30 # optional, in seconds, default is 6
+    memorySize: 10240 # optional, in MB, default is 1024
+    layers:
+      - !Ref TesseractAl2LambdaLayer
